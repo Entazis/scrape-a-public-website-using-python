@@ -17,7 +17,7 @@ def simple_get(url):
         'Accept-Language': 'hu,en-US;q=0.7,en;q=0.3',
         'Cache-Control': 'max-age=0',
         'Connection': 'keep-alive',
-        'Cookie': '_menus_session=BAh7B0kiD3Nlc3Npb25faWQGOgZFVEkiJWI5YmI0OWFkMjNmOWY2NmVkMDI3NWM2OTg3OWMzYzFkBjsAVEkiEF9jc3JmX3Rva2VuBjsARkkiMWdhUFpSUVRzMXdEREZhL0kwbk1GWlZhYnJ3YkJlZjVnNmpXSlhxUnJzVWc9BjsARg%3D%3D--aff80691c3ea5119918bc4e9899181a8e89e0775; visid_incap_23338=ssEKo17PSsKuUVKNjqrbG41Z0l0AAAAAQUIPAAAAAAAqLB9Rq19FD5NfizkGKbok; nlbi_23338=MJ42ayLFdR7k4hLGnkdPnAAAAAD8d4QJj5D1LNMab4w29ihX; incap_ses_1077_23338=0tdnHj24qT4jQ+qaTUbyDqtk0l0AAAAAr+R5DLISP3H7NxsyQA5jjw==; __utma=121363604.619817368.1574066576.1574066576.1574069420.2; __utmc=121363604; __utmz=121363604.1574066576.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); __utmb=121363604.1.10.1574069420; __utmt=1',
+        'Cookie': '_menus_session=BAh7B0kiD3Nlc3Npb25faWQGOgZFVEkiJWI5YmI0OWFkMjNmOWY2NmVkMDI3NWM2OTg3OWMzYzFkBjsAVEkiEF9jc3JmX3Rva2VuBjsARkkiMWdhUFpSUVRzMXdEREZhL0kwbk1GWlZhYnJ3YkJlZjVnNmpXSlhxUnJzVWc9BjsARg%3D%3D--aff80691c3ea5119918bc4e9899181a8e89e0775; visid_incap_23338=ssEKo17PSsKuUVKNjqrbG41Z0l0AAAAAQUIPAAAAAAAqLB9Rq19FD5NfizkGKbok; nlbi_23338=MJ42ayLFdR7k4hLGnkdPnAAAAAD8d4QJj5D1LNMab4w29ihX; incap_ses_1077_23338=Ydy6BTY4hkqnU+uaTUbyDsN40l0AAAAAV77vbyN8Sc6WeA8IUSoSzA==; __utma=121363604.619817368.1574066576.1574072018.1574074566.4; __utmc=121363604; __utmz=121363604.1574066576.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); __utmb=121363604.1.10.1574074566; __utmt=1',
         'Host': 'menus.nypl.org',
         'If-None-Match': '"343e975a1dcbf254a0329017a2a31c1a"',
         'Upgrade-Insecure-Requests': '1',
@@ -61,7 +61,20 @@ if __name__ == '__main__':
         values = list(filter(None, re.split('\n|\t', p.text)))
 
         if len(values) == 2:
-            sr.at[values[0]] = values[1]
+            sr.at[values[0].lower()] = values[1]
             print(values[0] + ': ' + values[1])
 
+    for tr in dishes:
+        name = tr.select('.name')[0].text
+        page = tr.select('.page a')[0]['href'] if tr.select('.page a') else None
+        price = tr.select('.price')[0].text
+
+        if name and page and price:
+            sr.at['dish'] = name
+            sr.at['page'] = page
+            sr.at['price'] = price
+            df = df.append(sr, ignore_index=True)
+            print(name, page, price)
+
+    df.to_csv('output.csv', index=False)
     print('done.')
