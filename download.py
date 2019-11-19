@@ -1,27 +1,30 @@
 from contextlib import closing
 import re
+import time
 
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
 
 
 def log_error(e):
     print(e)
 
 
-def simple_get(url):
+def simple_get(url, cookies):
     headers = {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Encoding': 'gzip, deflate',
-        'Accept-Language': 'hu,en-US;q=0.7,en;q=0.3',
-        'Cache-Control': 'max-age=0',
-        'Connection': 'keep-alive',
-        'Cookie': '_menus_session=BAh7B0kiD3Nlc3Npb25faWQGOgZFVEkiJWI5YmI0OWFkMjNmOWY2NmVkMDI3NWM2OTg3OWMzYzFkBjsAVEkiEF9jc3JmX3Rva2VuBjsARkkiMWdhUFpSUVRzMXdEREZhL0kwbk1GWlZhYnJ3YkJlZjVnNmpXSlhxUnJzVWc9BjsARg%3D%3D--aff80691c3ea5119918bc4e9899181a8e89e0775; visid_incap_23338=ssEKo17PSsKuUVKNjqrbG41Z0l0AAAAAQUIPAAAAAAAqLB9Rq19FD5NfizkGKbok; nlbi_23338=MJ42ayLFdR7k4hLGnkdPnAAAAAD8d4QJj5D1LNMab4w29ihX; incap_ses_1077_23338=Ydy6BTY4hkqnU+uaTUbyDsN40l0AAAAAV77vbyN8Sc6WeA8IUSoSzA==; __utma=121363604.619817368.1574066576.1574072018.1574074566.4; __utmc=121363604; __utmz=121363604.1574066576.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); __utmb=121363604.1.10.1574074566; __utmt=1',
         'Host': 'menus.nypl.org',
-        'If-None-Match': '"343e975a1dcbf254a0329017a2a31c1a"',
+        'Connection': 'keep-alive',
+        'Cache-Control': 'max-age=0',
         'Upgrade-Insecure-Requests': '1',
-        'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:70.0) Gecko/20100101 Firefox/70.0',
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Cookie': cookies,
+        'If-None-Match': '"7cceab85b82369f56e93bec759d9a879"'
     }
 
     proxies = {
@@ -48,8 +51,27 @@ def is_good_response(resp):
             and content_type.find('html') > -1)
 
 
+def get_cookies_with_selenium():
+    with webdriver.Chrome(executable_path='/usr/bin/chromedriver') as driver:
+        wait = WebDriverWait(driver, 10)
+        driver.get('http://menus.nypl.org/menus/25602')
+        time.sleep(10)
+        cookies_list_raw = driver.get_cookies()
+
+        cookies_list = []
+        for cookie_raw in cookies_list_raw:
+            cookies_list.append(cookie_raw['name'] + '=' + cookie_raw['value'])
+        cookies = ';'.join(cookies_list)
+
+        return cookies
+
+
 if __name__ == '__main__':
-    response = simple_get('http://menus.nypl.org/menus/25602')
+    cookies = get_cookies_with_selenium()
+
+    response = simple_get('http://menus.nypl.org/menus/25602', cookies)
+    response2 = simple_get('http://menus.nypl.org/menus/29285', cookies)
+
     html = BeautifulSoup(response, 'html.parser')
     metadata = html.select('.content  .metadata  .wrap p')
     dishes = html.select('.content  .dishes tr')
