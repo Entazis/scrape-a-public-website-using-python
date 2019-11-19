@@ -55,7 +55,7 @@ def get_cookies_with_selenium():
     with webdriver.Chrome(executable_path='/usr/bin/chromedriver') as driver:
         wait = WebDriverWait(driver, 10)
         driver.get('http://menus.nypl.org/menus/25602')
-        time.sleep(10)
+        time.sleep(5)
         cookies_list_raw = driver.get_cookies()
 
         cookies_list = []
