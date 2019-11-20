@@ -1,6 +1,7 @@
-from contextlib import closing
 import re
 import time
+from datetime import datetime
+from contextlib import closing
 
 import requests
 from bs4 import BeautifulSoup
@@ -54,6 +55,17 @@ def get_cookies_and_urls_with_selenium_from(decade_url):
         for cookie_raw in cookies_list_raw:
             cookies_list.append(cookie_raw['name'] + '=' + cookie_raw['value'])
 
+        length_of_page = driver.execute_script(
+            "window.scrollTo(0, document.body.scrollHeight);var lenOfPage=document.body.scrollHeight;return lenOfPage;")
+        match = False
+        while not match:
+            last_count = length_of_page
+            time.sleep(3)
+            length_of_page = driver.execute_script(
+                "window.scrollTo(0, document.body.scrollHeight);var lenOfPage=document.body.scrollHeight;return lenOfPage;")
+            if last_count == length_of_page:
+                match = True
+
         html = BeautifulSoup(driver.page_source, 'html.parser')
         hrefs = html.select('a.thumbportrait')
 
@@ -94,7 +106,29 @@ def parse_response(response):
 
 
 if __name__ == '__main__':
-    cookies, urls = get_cookies_and_urls_with_selenium_from('http://menus.nypl.org/menus/decade/1850s')
+    output_folder_input = 'data'
+    start_date_input = '18530220'
+    end_date_input = '18700510'
+    # /data/local/yyyy/MM/dd/HHmmss/output.csv (when the script ran)
+
+    start_year = datetime.strptime(start_date_input, '%Y%m%d').year
+    end_year = datetime.strptime(end_date_input, '%Y%m%d').year
+    now = datetime.now()
+    folder_year = now.year
+    folder_month = now.month
+    folder_day = now.day
+
+    # 1873 contains menus from 1873 to 1882
+    pages_to_get_urls_from = ['http://menus.nypl.org/menus/decade/' + str(start_year)]
+    decade_year = start_year + 10
+    while decade_year < end_year:
+        pages_to_get_urls_from.append('http://menus.nypl.org/menus/decade/' + str(decade_year))
+        decade_year = decade_year + 10
+
+    cookies = []
+    urls = []
+    for page in pages_to_get_urls_from:
+        cookies, urls = get_cookies_and_urls_with_selenium_from(page)
 
     df = pd.DataFrame()
     for url in urls:
