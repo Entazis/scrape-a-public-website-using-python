@@ -132,39 +132,54 @@ def parse_response(response):
         return None
 
 
+def parse_arguments():
+    try:
+        ap = argparse.ArgumentParser(prog='download',
+                                     usage='%(prog)s [options] path',
+                                     description='Scrape menus from menus.nypl.org.')
+        ap.add_argument('--start_date',
+                        action='store',
+                        type=str,
+                        help='from what time to scrape the menus',
+                        required=True)
+        ap.add_argument('--end_date',
+                        action='store',
+                        type=str,
+                        help='till what time to scrape the menus',
+                        required=True)
+        ap.add_argument('output_folder',
+                        action='store',
+                        type=str,
+                        help='the path to the destination folder',
+                        default='./data')
+        return ap.parse_args()
+
+    except Exception as e:
+        logging.error('Parsing arguments: ' + str(e))
+        return None
+
+
 if __name__ == '__main__':
     start_date_input = '18530220'
     end_date_input = '18700510'
+    output_folder_input = 'data'
 
-    ap = argparse.ArgumentParser(prog='download',
-                                 usage='%(prog)s [options] path',
-                                 description='Scrape menus from menus.nypl.org.')
-    ap.add_argument('--start_date',
-                    action='store',
-                    type=str,
-                    help='from what time to scrape the menus',
-                    required=True)
-    ap.add_argument('--end_date',
-                    action='store',
-                    type=str,
-                    help='till what time to scrape the menus',
-                    required=True)
-    ap.add_argument('output_folder',
-                    action='store',
-                    type=str,
-                    help='the path to the destination folder',
-                    default='./data')
-    args = ap.parse_args()
+    # args = parse_arguments()
 
-    start_year = datetime.strptime(args.start_date, '%Y%m%d').year
-    end_year = datetime.strptime(args.end_date, '%Y%m%d').year
+    start_year = datetime.strptime(start_date_input, '%Y%m%d').year # args.start_date
+    end_year = datetime.strptime(end_date_input, '%Y%m%d').year # args.end_date
     now = datetime.now()
     folder_year = now.year
-    folder_month = now.month
-    folder_day = now.day
-    output_path = os.path.join(args.output_folder, str(folder_year), str(folder_month), str(folder_day))
+    folder_month = '{:02d}'.format(now.month)
+    folder_day = '{:02d}'.format(now.day)
+    folder_hhmmss = '{:02d}{:02d}{:02d}'.format(now.hour, now.minute, now.second)
+    output_path = os.path.join(output_folder_input,  # args.output_folder
+                               str(folder_year),
+                               str(folder_month),
+                               str(folder_day),
+                               str(folder_hhmmss))
 
-    print('Scraping \nfrom ' + str(start_year) + ' ')
+    print('Scraping \nfrom: ' + str(start_year) + ' ')
     print('to: ' + str(end_year) + ' ')
     print('path: ' + output_path)
 
