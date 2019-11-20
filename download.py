@@ -28,6 +28,8 @@ def get_content_from_url_using_cookies(url, cookies):
         'If-None-Match': '"7cceab85b82369f56e93bec759d9a879"'
     }
 
+    print('Scraping URL: ', url)
+
     try:
         with closing(requests.get(url, headers=headers, stream=True)) as resp:
             if is_good_response(resp):
@@ -97,7 +99,6 @@ def parse_response(response):
 
         if len(values) == 2:
             sr.at[values[0].lower()] = values[1]
-            print(values[0] + ': ' + values[1])
 
     for tr in dishes:
         name = tr.select('.name')[0].text
@@ -117,7 +118,6 @@ if __name__ == '__main__':
     output_folder_input = './data'
     start_date_input = '18530220'
     end_date_input = '18700510'
-    # /data/local/yyyy/MM/dd/HHmmss/output.csv (when the script ran)
 
     start_year = datetime.strptime(start_date_input, '%Y%m%d').year
     end_year = datetime.strptime(end_date_input, '%Y%m%d').year
@@ -144,6 +144,7 @@ if __name__ == '__main__':
     for menu_url in menu_urls:
         df = df.append(parse_response(get_content_from_url_using_cookies(menu_url, cookies_from_last_page)))
 
-    os.makedirs(output_path)
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
     df.to_csv(os.path.join(output_path, 'output.csv'), index=False)
     print('done.')
