@@ -6,14 +6,13 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait
 
 
 def log_error(e):
     print(e)
 
 
-def simple_get(url, cookies):
+def get_content_from_url_using_cookies(url, cookies):
     headers = {
         'Host': 'menus.nypl.org',
         'Connection': 'keep-alive',
@@ -25,11 +24,6 @@ def simple_get(url, cookies):
         'Accept-Language': 'en-US,en;q=0.9',
         'Cookie': cookies,
         'If-None-Match': '"7cceab85b82369f56e93bec759d9a879"'
-    }
-
-    proxies = {
-        'http': 'http://194.226.34.132:5555',
-        'https': 'http://194.226.34.132:5555'
     }
 
     try:
@@ -51,27 +45,26 @@ def is_good_response(resp):
             and content_type.find('html') > -1)
 
 
-def get_cookies_with_selenium():
+def get_cookies_and_urls_with_selenium_from(decade_url):
     with webdriver.Chrome(executable_path='/usr/bin/chromedriver') as driver:
-        wait = WebDriverWait(driver, 10)
-        driver.get('http://menus.nypl.org/menus/25602')
-        time.sleep(5)
+        driver.get(decade_url)
+        time.sleep(3)
         cookies_list_raw = driver.get_cookies()
-
         cookies_list = []
         for cookie_raw in cookies_list_raw:
             cookies_list.append(cookie_raw['name'] + '=' + cookie_raw['value'])
-        cookies = ';'.join(cookies_list)
 
-        return cookies
+        html = BeautifulSoup(driver.page_source, 'html.parser')
+        hrefs = html.select('a.thumbportrait')
+
+        urls = []
+        for href in hrefs:
+            urls.append(href['href'])
+
+        return ';'.join(cookies_list), urls
 
 
-if __name__ == '__main__':
-    cookies = get_cookies_with_selenium()
-
-    response = simple_get('http://menus.nypl.org/menus/25602', cookies)
-    response2 = simple_get('http://menus.nypl.org/menus/29285', cookies)
-
+def parse_response(response):
     html = BeautifulSoup(response, 'html.parser')
     metadata = html.select('.content  .metadata  .wrap p')
     dishes = html.select('.content  .dishes tr')
@@ -96,7 +89,16 @@ if __name__ == '__main__':
             sr.at['page'] = page
             sr.at['price'] = price
             df = df.append(sr, ignore_index=True)
-            print(name, page, price)
+
+    return df
+
+
+if __name__ == '__main__':
+    cookies, urls = get_cookies_and_urls_with_selenium_from('http://menus.nypl.org/menus/decade/1850s')
+
+    df = pd.DataFrame()
+    for url in urls:
+        df = df.append( parse_response(get_content_from_url_using_cookies(url, cookies)))
 
     df.to_csv('output.csv', index=False)
     print('done.')
