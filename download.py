@@ -46,14 +46,10 @@ def is_good_response(resp):
             and content_type.find('html') > -1)
 
 
-def get_cookies_and_urls_with_selenium_from(decade_url):
+def get_urls_with_selenium_from(url):
     with webdriver.Chrome(executable_path='/usr/bin/chromedriver') as driver:
-        driver.get(decade_url)
+        driver.get(url)
         time.sleep(3)
-        cookies_list_raw = driver.get_cookies()
-        cookies_list = []
-        for cookie_raw in cookies_list_raw:
-            cookies_list.append(cookie_raw['name'] + '=' + cookie_raw['value'])
 
         length_of_page = driver.execute_script(
             "window.scrollTo(0, document.body.scrollHeight);var lenOfPage=document.body.scrollHeight;return lenOfPage;")
@@ -73,7 +69,18 @@ def get_cookies_and_urls_with_selenium_from(decade_url):
         for href in hrefs:
             urls.append(href['href'])
 
-        return ';'.join(cookies_list), urls
+        return urls
+
+
+def get_cookies_with_selenium_from(url):
+    with webdriver.Chrome(executable_path='/usr/bin/chromedriver') as driver:
+        driver.get(url)
+        time.sleep(3)
+        cookies_list_raw = driver.get_cookies()
+        cookies_list = []
+        for cookie_raw in cookies_list_raw:
+            cookies_list.append(cookie_raw['name'] + '=' + cookie_raw['value'])
+        return ';'.join(cookies_list)
 
 
 def parse_response(response):
@@ -125,14 +132,15 @@ if __name__ == '__main__':
         pages_to_get_urls_from.append('http://menus.nypl.org/menus/decade/' + str(decade_year))
         decade_year = decade_year + 10
 
-    cookies = []
-    urls = []
+    menu_urls = []
     for page in pages_to_get_urls_from:
-        cookies, urls = get_cookies_and_urls_with_selenium_from(page)
+        menu_urls.append(get_urls_with_selenium_from(page))
+    menu_urls = [item for sublist in menu_urls for item in sublist]
+    cookies_from_last_page = get_cookies_with_selenium_from(menu_urls[len(menu_urls) - 1])
 
     df = pd.DataFrame()
-    for url in urls:
-        df = df.append( parse_response(get_content_from_url_using_cookies(url, cookies)))
+    for menu_url in menu_urls:
+        df = df.append(parse_response(get_content_from_url_using_cookies(menu_url, cookies_from_last_page)))
 
     df.to_csv('output.csv', index=False)
     print('done.')
