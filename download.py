@@ -1,3 +1,4 @@
+import os
 import re
 import time
 from datetime import datetime
@@ -113,7 +114,7 @@ def parse_response(response):
 
 
 if __name__ == '__main__':
-    output_folder_input = 'data'
+    output_folder_input = './data'
     start_date_input = '18530220'
     end_date_input = '18700510'
     # /data/local/yyyy/MM/dd/HHmmss/output.csv (when the script ran)
@@ -125,7 +126,8 @@ if __name__ == '__main__':
     folder_month = now.month
     folder_day = now.day
 
-    # 1873 contains menus from 1873 to 1882
+    output_path = os.path.join(output_folder_input, str(folder_year), str(folder_month), str(folder_day))
+
     pages_to_get_urls_from = ['http://menus.nypl.org/menus/decade/' + str(start_year)]
     decade_year = start_year + 10
     while decade_year < end_year:
@@ -142,5 +144,6 @@ if __name__ == '__main__':
     for menu_url in menu_urls:
         df = df.append(parse_response(get_content_from_url_using_cookies(menu_url, cookies_from_last_page)))
 
-    df.to_csv('output.csv', index=False)
+    os.makedirs(output_path)
+    df.to_csv(os.path.join(output_path, 'output.csv'), index=False)
     print('done.')
