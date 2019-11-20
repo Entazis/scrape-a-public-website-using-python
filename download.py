@@ -37,81 +37,101 @@ def get_content_from_url_using_cookies(url, cookies):
             else:
                 return None
 
-    except:
-        log_error('Error during requests to: ...')
+    except Exception as e:
+        log_error('Error during requests to: ' + url + '\n ' + str(e))
         return None
 
 
 def is_good_response(resp):
-    content_type = resp.headers['Content-Type'].lower()
-    return (resp.status_code == 200
-            and content_type is not None
-            and content_type.find('html') > -1)
+    try:
+        content_type = resp.headers['Content-Type'].lower()
+        return (resp.status_code == 200
+                and content_type is not None
+                and content_type.find('html') > -1)
+
+    except Exception as e:
+        log_error(str(e))
+        return False
 
 
 def get_urls_with_selenium_from(url):
-    with webdriver.Chrome(executable_path='/usr/bin/chromedriver') as driver:
-        driver.get(url)
-        time.sleep(3)
-
-        length_of_page = driver.execute_script(
-            "window.scrollTo(0, document.body.scrollHeight);var lenOfPage=document.body.scrollHeight;return lenOfPage;")
-        match = False
-        while not match:
-            last_count = length_of_page
+    try:
+        with webdriver.Chrome(executable_path='/usr/bin/chromedriver') as driver:
+            driver.get(url)
             time.sleep(3)
+
             length_of_page = driver.execute_script(
                 "window.scrollTo(0, document.body.scrollHeight);var lenOfPage=document.body.scrollHeight;return lenOfPage;")
-            if last_count == length_of_page:
-                match = True
+            match = False
+            while not match:
+                last_count = length_of_page
+                time.sleep(3)
+                length_of_page = driver.execute_script(
+                    "window.scrollTo(0, document.body.scrollHeight);var lenOfPage=document.body.scrollHeight;return lenOfPage;")
+                if last_count == length_of_page:
+                    match = True
 
-        html = BeautifulSoup(driver.page_source, 'html.parser')
-        hrefs = html.select('a.thumbportrait')
+            html = BeautifulSoup(driver.page_source, 'html.parser')
+            hrefs = html.select('a.thumbportrait')
 
-        urls = []
-        for href in hrefs:
-            urls.append(href['href'])
+            urls = []
+            for href in hrefs:
+                urls.append(href['href'])
 
-        return urls
+            return urls
+
+    except Exception as e:
+        log_error('Error getting urls with selenium from: ' + url + '\n' + str(e))
+        return None
 
 
 def get_cookies_with_selenium_from(url):
-    with webdriver.Chrome(executable_path='/usr/bin/chromedriver') as driver:
-        driver.get(url)
-        time.sleep(3)
-        cookies_list_raw = driver.get_cookies()
-        cookies_list = []
-        for cookie_raw in cookies_list_raw:
-            cookies_list.append(cookie_raw['name'] + '=' + cookie_raw['value'])
-        return ';'.join(cookies_list)
+    try:
+        with webdriver.Chrome(executable_path='/usr/bin/chromedriver') as driver:
+            driver.get(url)
+            time.sleep(3)
+            cookies_list_raw = driver.get_cookies()
+            cookies_list = []
+            for cookie_raw in cookies_list_raw:
+                cookies_list.append(cookie_raw['name'] + '=' + cookie_raw['value'])
+            return ';'.join(cookies_list)
+
+    except Exception as e:
+        log_error('Error getting cookies with selenium from: ' + url + '\n' + str(e))
+        return None
 
 
 def parse_response(response):
-    html = BeautifulSoup(response, 'html.parser')
-    metadata = html.select('.content  .metadata  .wrap p')
-    dishes = html.select('.content  .dishes tr')
+    try:
+        html = BeautifulSoup(response, 'html.parser')
+        metadata = html.select('.content  .metadata  .wrap p')
+        dishes = html.select('.content  .dishes tr')
 
-    df = pd.DataFrame()
-    sr = pd.Series()
+        df = pd.DataFrame()
+        sr = pd.Series()
 
-    for p in metadata:
-        values = list(filter(None, re.split('\n|\t', p.text)))
+        for p in metadata:
+            values = list(filter(None, re.split('\n|\t', p.text)))
 
-        if len(values) == 2:
-            sr.at[values[0].lower()] = values[1]
+            if len(values) == 2:
+                sr.at[values[0].lower()] = values[1]
 
-    for tr in dishes:
-        name = tr.select('.name')[0].text
-        page = tr.select('.page a')[0]['href'] if tr.select('.page a') else None
-        price = tr.select('.price')[0].text
+        for tr in dishes:
+            name = tr.select('.name')[0].text
+            page = tr.select('.page a')[0]['href'] if tr.select('.page a') else None
+            price = tr.select('.price')[0].text
 
-        if name and page and price:
-            sr.at['dish'] = name
-            sr.at['page'] = page
-            sr.at['price'] = price
-            df = df.append(sr, ignore_index=True)
+            if name and page and price:
+                sr.at['dish'] = name
+                sr.at['page'] = page
+                sr.at['price'] = price
+                df = df.append(sr, ignore_index=True)
 
-    return df
+        return df
+
+    except Exception as e:
+        log_error('Error parsing response: ' + str(e))
+        return None
 
 
 if __name__ == '__main__':
@@ -140,11 +160,14 @@ if __name__ == '__main__':
     menu_urls = [item for sublist in menu_urls for item in sublist]
     cookies_from_last_page = get_cookies_with_selenium_from(menu_urls[len(menu_urls) - 1])
 
-    df = pd.DataFrame()
+    output_df = pd.DataFrame()
     for menu_url in menu_urls:
-        df = df.append(parse_response(get_content_from_url_using_cookies(menu_url, cookies_from_last_page)))
+        output_df = output_df.append(
+            parse_response(
+                get_content_from_url_using_cookies(menu_url, cookies_from_last_page)),
+            sort=False)
 
     if not os.path.exists(output_path):
         os.makedirs(output_path)
-    df.to_csv(os.path.join(output_path, 'output.csv'), index=False)
+    output_df.to_csv(os.path.join(output_path, 'output.csv'), index=False)
     print('done.')
