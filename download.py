@@ -1,12 +1,13 @@
+import argparse
 import os
 import re
 import time
-from datetime import datetime
 from contextlib import closing
+from datetime import datetime
 
-import requests
 from bs4 import BeautifulSoup
 import pandas as pd
+import requests
 from selenium import webdriver
 
 
@@ -135,18 +136,40 @@ def parse_response(response):
 
 
 if __name__ == '__main__':
-    output_folder_input = './data'
     start_date_input = '18530220'
     end_date_input = '18700510'
 
-    start_year = datetime.strptime(start_date_input, '%Y%m%d').year
-    end_year = datetime.strptime(end_date_input, '%Y%m%d').year
+    ap = argparse.ArgumentParser(prog='download',
+                                 usage='%(prog)s [options] path',
+                                 description='Scrape menus from menus.nypl.org.')
+    ap.add_argument('--start_date',
+                    action='store',
+                    type=str,
+                    help='from what time to scrape the menus',
+                    required=True)
+    ap.add_argument('--end_date',
+                    action='store',
+                    type=str,
+                    help='till what time to scrape the menus',
+                    required=True)
+    ap.add_argument('output_folder',
+                    action='store',
+                    type=str,
+                    help='the path to the destination folder',
+                    default='./data')
+    args = ap.parse_args()
+
+    start_year = datetime.strptime(args.start_date, '%Y%m%d').year
+    end_year = datetime.strptime(args.end_date, '%Y%m%d').year
     now = datetime.now()
     folder_year = now.year
     folder_month = now.month
     folder_day = now.day
+    output_path = os.path.join(args.output_folder, str(folder_year), str(folder_month), str(folder_day))
 
-    output_path = os.path.join(output_folder_input, str(folder_year), str(folder_month), str(folder_day))
+    print('Scraping \nfrom ' + str(start_year) + ' ')
+    print('to: ' + str(end_year) + ' ')
+    print('into: ' + output_path)
 
     pages_to_get_urls_from = ['http://menus.nypl.org/menus/decade/' + str(start_year)]
     decade_year = start_year + 10
