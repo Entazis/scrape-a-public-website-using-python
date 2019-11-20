@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 import re
 import time
@@ -9,10 +10,6 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import requests
 from selenium import webdriver
-
-
-def log_error(e):
-    print(e)
 
 
 def get_content_from_url_using_cookies(url, cookies):
@@ -39,7 +36,7 @@ def get_content_from_url_using_cookies(url, cookies):
                 return None
 
     except Exception as e:
-        log_error('Error during requests to: ' + url + '\n ' + str(e))
+        logging.error('During requests to: ' + url + '\n ' + str(e))
         return None
 
 
@@ -51,7 +48,7 @@ def is_good_response(resp):
                 and content_type.find('html') > -1)
 
     except Exception as e:
-        log_error(str(e))
+        logging.error(str(e))
         return False
 
 
@@ -82,7 +79,7 @@ def get_urls_with_selenium_from(url):
             return urls
 
     except Exception as e:
-        log_error('Error getting urls with selenium from: ' + url + '\n' + str(e))
+        logging.error('Getting urls with selenium from: ' + url + '\n' + str(e))
         return None
 
 
@@ -98,7 +95,7 @@ def get_cookies_with_selenium_from(url):
             return ';'.join(cookies_list)
 
     except Exception as e:
-        log_error('Error getting cookies with selenium from: ' + url + '\n' + str(e))
+        logging.error('Getting cookies with selenium from: ' + url + '\n' + str(e))
         return None
 
 
@@ -131,7 +128,7 @@ def parse_response(response):
         return df
 
     except Exception as e:
-        log_error('Error parsing response: ' + str(e))
+        logging.error('Parsing response: ' + str(e))
         return None
 
 
@@ -169,7 +166,7 @@ if __name__ == '__main__':
 
     print('Scraping \nfrom ' + str(start_year) + ' ')
     print('to: ' + str(end_year) + ' ')
-    print('into: ' + output_path)
+    print('path: ' + output_path)
 
     pages_to_get_urls_from = ['http://menus.nypl.org/menus/decade/' + str(start_year)]
     decade_year = start_year + 10
@@ -193,4 +190,5 @@ if __name__ == '__main__':
     if not os.path.exists(output_path):
         os.makedirs(output_path)
     output_df.to_csv(os.path.join(output_path, 'output.csv'), index=False)
+
     print('done.')
