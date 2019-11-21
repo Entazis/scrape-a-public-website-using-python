@@ -202,15 +202,11 @@ if __name__ == '__main__':
     output_folder = args.output_folder
 
     now = datetime.now()
-    folder_year = now.year
-    folder_month = '{:02d}'.format(now.month)
-    folder_day = '{:02d}'.format(now.day)
-    folder_hhmmss = '{:02d}{:02d}{:02d}'.format(now.hour, now.minute, now.second)
     output_path = os.path.join(output_folder,
-                               str(folder_year),
-                               str(folder_month),
-                               str(folder_day),
-                               str(folder_hhmmss))
+                               str(now.year),
+                               str('{:02d}'.format(now.month)),
+                               str('{:02d}'.format(now.day)),
+                               str('{:02d}{:02d}{:02d}'.format(now.hour, now.minute, now.second)))
 
     print('Scraping \nfrom: ' + str(start_date.strftime('%Y.%m.%d.')) + ' ')
     print('to: ' + str(end_date.strftime('%Y.%m.%d.')) + ' ')
