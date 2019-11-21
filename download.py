@@ -113,6 +113,9 @@ def parse_response(response):
 
             if len(values) == 2:
                 sr.at[values[0].lower()] = values[1]
+            elif len(values) == 1 and p.select('strong'):
+                sr.at['n_dishes'] = p.select('strong')[0].text
+                pass
 
         for tr in dishes:
             name = tr.select('.name')[0].text
@@ -161,7 +164,7 @@ def parse_arguments():
 
 if __name__ == '__main__':
     start_date_input = '18530220'
-    end_date_input = '18700510'
+    end_date_input = '18570510'
     output_folder_input = 'data'
 
     # args = parse_arguments()
