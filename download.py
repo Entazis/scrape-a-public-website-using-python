@@ -13,7 +13,21 @@ import requests
 from selenium import webdriver
 
 
-def get_content_from_url_using_cookies(url, cookies):
+def get_content_from_url_using_cookies(url: str, cookies: str) -> object:
+    """Simple get request using custom cookies.
+
+    Parameters
+    ----------
+    url
+        URL to get from.
+    cookies
+        Cookies defined in string.
+
+    Returns
+    -------
+    object
+        Content of the response of the request or None.
+    """
     headers = {
         'Host': 'menus.nypl.org',
         'Connection': 'keep-alive',
@@ -41,7 +55,21 @@ def get_content_from_url_using_cookies(url, cookies):
         return None
 
 
-def is_good_response(resp):
+def is_good_response(resp: object) -> bool:
+    """Simple response validity check.
+
+    Checks the status code, content type and html tag.
+
+    Parameters
+    ----------
+    resp
+        Response object to check
+
+    Returns
+    -------
+    bool
+        True if the response is valid.
+    """
     try:
         content_type = resp.headers['Content-Type'].lower()
         return (resp.status_code == 200
@@ -53,7 +81,21 @@ def is_good_response(resp):
         return False
 
 
-def get_urls_with_selenium_from(url):
+def get_urls_with_selenium_from(url: str) -> list:
+    """Collect URLS from a page.
+
+    Scrolls down the page till it can, then collects the urls defined in <a class="thumbportrait" href="...">s.
+
+    Parameters
+    ----------
+    url
+        URL of the page with urls.
+
+    Returns
+    -------
+    list
+        List of the collected urls.
+    """
     try:
         with webdriver.Chrome(executable_path='/usr/bin/chromedriver') as driver:
             driver.get(url)
@@ -81,10 +123,24 @@ def get_urls_with_selenium_from(url):
 
     except Exception as e:
         logging.error('Getting urls with selenium from: ' + url + '\n' + str(e))
-        return None
+        return []
 
 
-def get_cookies_with_selenium_from(url):
+def get_cookies_with_selenium_from(url: str) -> str:
+    """Get cookies from a page.
+
+    Navigates to the side and saves the cookies.
+
+    Parameters
+    ----------
+    url
+        URL of the page to get cookies from.
+
+    Returns
+    -------
+    str
+        Cookies got from the page.
+    """
     try:
         with webdriver.Chrome(executable_path='/usr/bin/chromedriver') as driver:
             driver.get(url)
@@ -97,10 +153,24 @@ def get_cookies_with_selenium_from(url):
 
     except Exception as e:
         logging.error('Getting cookies with selenium from: ' + url + '\n' + str(e))
-        return None
+        return ''
 
 
-def parse_response(response):
+def parse_response(response: object) -> pd.DataFrame:
+    """Parses the response got from request.
+
+    identifies the page elements and arrange them into a dataframe.
+
+    Parameters
+    ----------
+    response
+        Response from a request
+
+    Returns
+    -------
+    object
+        Dataframe with the parsed date.
+    """
     try:
         html = BeautifulSoup(response, 'html.parser')
         metadata = html.select('.content  .metadata  .wrap p')
@@ -138,10 +208,17 @@ def parse_response(response):
 
     except Exception as e:
         logging.error('Parsing response: ' + str(e))
-        return None
+        return pd.DataFrame()
 
 
-def parse_arguments():
+def parse_arguments() -> object:
+    """Parses the input arguments from command line.
+
+    Returns
+    -------
+    object
+        Object with the arguments.
+    """
     try:
         ap = argparse.ArgumentParser(prog='download',
                                      usage='%(prog)s [options] path',
@@ -168,7 +245,19 @@ def parse_arguments():
         return None
 
 
-def parse_date(date_string):
+def parse_date(date_string: str) -> object:
+    """Creates a datetime object from a string.
+
+    Parameters
+    ----------
+    date_string
+        Date in string YYYYMMDD format.
+
+    Returns
+    -------
+    object
+        Datetime.
+    """
     try:
         date = []
         if len(date_string) == 8:
