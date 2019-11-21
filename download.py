@@ -1,4 +1,5 @@
 import argparse
+import calendar
 import logging
 import os
 import re
@@ -167,21 +168,49 @@ def parse_arguments():
         return None
 
 
+def parse_date(date_string):
+    try:
+        date = []
+        if len(date_string) == 8:
+            date = datetime.strptime(date_string, '%Y%m%d')
+        elif len(date_string) == 6:
+            date = datetime.strptime(date_string, '%Y%m')
+            date = date.replace(day=calendar.monthrange(date.year, date.month)[1])
+        elif len(date_string) == 4:
+            date = datetime.strptime(date_string, '%Y')
+        else:
+            date = datetime(1853, 1, 1)
+
+        return date
+
+    except Exception as e:
+        logging.error('Parsing date: ' + str(e))
+        return None
+
+
 if __name__ == '__main__':
-    start_date_input = '18530220'
-    end_date_input = '18570510'
-    output_folder_input = 'data'
 
     # args = parse_arguments()
+    # for testing
+    class Arguments:
+        start_date = '18530220'
+        end_date = '18570510'
+        output_folder = 'data'
+    args = Arguments()
 
-    start_year = datetime.strptime(start_date_input, '%Y%m%d').year  # args.start_date
-    end_year = datetime.strptime(end_date_input, '%Y%m%d').year  # args.end_date
+    start_date = parse_date(args.start_date)
+    end_date = parse_date(args.end_date)
+    output_folder = args.output_folder
+
+    start_year = start_date.year
+    end_year = end_date.year
+
     now = datetime.now()
     folder_year = now.year
     folder_month = '{:02d}'.format(now.month)
     folder_day = '{:02d}'.format(now.day)
     folder_hhmmss = '{:02d}{:02d}{:02d}'.format(now.hour, now.minute, now.second)
-    output_path = os.path.join(output_folder_input,  # args.output_folder
+    output_path = os.path.join(output_folder,
                                str(folder_year),
                                str(folder_month),
                                str(folder_day),
@@ -193,7 +222,7 @@ if __name__ == '__main__':
 
     pages_to_get_urls_from = ['http://menus.nypl.org/menus/decade/' + str(start_year)]
     decade_year = start_year + 10
-    while decade_year < end_year:
+    while decade_year <= end_year:
         pages_to_get_urls_from.append('http://menus.nypl.org/menus/decade/' + str(decade_year))
         decade_year = decade_year + 10
 
@@ -210,7 +239,8 @@ if __name__ == '__main__':
                 get_content_from_url_using_cookies(menu_url, cookies_from_last_page)),
             sort=False)
 
-    output_df_filtered = output_df[(output_df['date'] >= start_date_input) & (output_df['date'] <= end_date_input)]
+    output_df_filtered = output_df[(output_df['date'] >= start_date.strftime('%Y%m%d')) &
+                                   (output_df['date'] <= end_date.strftime('%Y%m%d'))]
 
     if not os.path.exists(output_path):
         os.makedirs(output_path)
