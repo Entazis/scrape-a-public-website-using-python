@@ -1,5 +1,6 @@
 import argparse
 import calendar
+import dateutil.parser
 import logging
 import os
 import re
@@ -11,6 +12,9 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import requests
 from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.common.by import By
 
 
 def get_content_from_url_using_cookies(url: str, cookies: str) -> object:
@@ -99,14 +103,14 @@ def get_urls_with_selenium_from(url: str) -> list:
     try:
         with webdriver.Chrome(executable_path='/usr/bin/chromedriver') as driver:
             driver.get(url)
-            time.sleep(3)
+            results = WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.ID, 'results')))
 
             length_of_page = driver.execute_script(
                 "window.scrollTo(0, document.body.scrollHeight);var lenOfPage=document.body.scrollHeight;return lenOfPage;")
             match = False
             while not match:
                 last_count = length_of_page
-                time.sleep(3)
+                loadingmore = WebDriverWait(driver, 10).until(ec.invisibility_of_element_located((By.ID, 'loadingmore')))
                 length_of_page = driver.execute_script(
                     "window.scrollTo(0, document.body.scrollHeight);var lenOfPage=document.body.scrollHeight;return lenOfPage;")
                 if last_count == length_of_page:
@@ -184,11 +188,11 @@ def parse_response(response: object) -> pd.DataFrame:
 
             if len(values) == 2:
                 if values[0].lower() == 'date':
-                    date = datetime.strptime(values[1], '%B %d, %Y')
+                    date = dateutil.parser.parse(values[1])
                     sr.at['date'] = date.strftime('%Y%m%d')
                     pass
                 else:
-                    sr.at[values[0].lower()] = values[1]
+                    sr.at[values[0].lower().replace(' ', '_')] = values[1]
             elif len(values) == 1 and p.select('strong'):
                 sr.at['n_dishes'] = p.select('strong')[0].text
                 pass
