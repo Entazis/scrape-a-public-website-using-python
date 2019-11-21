@@ -112,7 +112,12 @@ def parse_response(response):
             values = list(filter(None, re.split('\n|\t', p.text)))
 
             if len(values) == 2:
-                sr.at[values[0].lower()] = values[1]
+                if values[0].lower() == 'date':
+                    date = datetime.strptime(values[1], '%B %d, %Y')
+                    sr.at['date'] = date.strftime('%Y%m%d')
+                    pass
+                else:
+                    sr.at[values[0].lower()] = values[1]
             elif len(values) == 1 and p.select('strong'):
                 sr.at['n_dishes'] = p.select('strong')[0].text
                 pass
@@ -169,8 +174,8 @@ if __name__ == '__main__':
 
     # args = parse_arguments()
 
-    start_year = datetime.strptime(start_date_input, '%Y%m%d').year # args.start_date
-    end_year = datetime.strptime(end_date_input, '%Y%m%d').year # args.end_date
+    start_year = datetime.strptime(start_date_input, '%Y%m%d').year  # args.start_date
+    end_year = datetime.strptime(end_date_input, '%Y%m%d').year  # args.end_date
     now = datetime.now()
     folder_year = now.year
     folder_month = '{:02d}'.format(now.month)
@@ -205,8 +210,10 @@ if __name__ == '__main__':
                 get_content_from_url_using_cookies(menu_url, cookies_from_last_page)),
             sort=False)
 
+    output_df_filtered = output_df[(output_df['date'] >= start_date_input) & (output_df['date'] <= end_date_input)]
+
     if not os.path.exists(output_path):
         os.makedirs(output_path)
-    output_df.to_csv(os.path.join(output_path, 'output.csv'), index=False)
+    output_df_filtered.to_csv(os.path.join(output_path, 'output.csv'), index=False)
 
     print('done.')
