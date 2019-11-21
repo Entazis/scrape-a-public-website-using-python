@@ -181,6 +181,11 @@ def parse_date(date_string):
         else:
             date = datetime(1853, 1, 1)
 
+        if date.year < 1853:
+            date = date.replace(year=1853)
+        if date.year > datetime.now().year:
+            date = date.replace(year=datetime.now().year)
+
         return date
 
     except Exception as e:
@@ -190,20 +195,11 @@ def parse_date(date_string):
 
 if __name__ == '__main__':
 
-    # args = parse_arguments()
-    # for testing
-    class Arguments:
-        start_date = '18530220'
-        end_date = '18570510'
-        output_folder = 'data'
-    args = Arguments()
+    args = parse_arguments()
 
     start_date = parse_date(args.start_date)
     end_date = parse_date(args.end_date)
     output_folder = args.output_folder
-
-    start_year = start_date.year
-    end_year = end_date.year
 
     now = datetime.now()
     folder_year = now.year
@@ -216,13 +212,13 @@ if __name__ == '__main__':
                                str(folder_day),
                                str(folder_hhmmss))
 
-    print('Scraping \nfrom: ' + str(start_year) + ' ')
-    print('to: ' + str(end_year) + ' ')
+    print('Scraping \nfrom: ' + str(start_date.strftime('%Y.%m.%d.')) + ' ')
+    print('to: ' + str(end_date.strftime('%Y.%m.%d.')) + ' ')
     print('path: ' + output_path)
 
-    pages_to_get_urls_from = ['http://menus.nypl.org/menus/decade/' + str(start_year)]
-    decade_year = start_year + 10
-    while decade_year <= end_year:
+    pages_to_get_urls_from = ['http://menus.nypl.org/menus/decade/' + str(start_date.year)]
+    decade_year = start_date.year + 10
+    while decade_year <= end_date.year:
         pages_to_get_urls_from.append('http://menus.nypl.org/menus/decade/' + str(decade_year))
         decade_year = decade_year + 10
 
