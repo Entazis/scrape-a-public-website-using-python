@@ -16,6 +16,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.common.by import By
 
+HOST = 'menus.nypl.org'
+URL = 'http://menus.nypl.org/menus/decade/'
+
 
 def get_content_from_url_using_cookies(url: str, cookies: str) -> object:
     """Simple get request using custom cookies.
@@ -33,7 +36,7 @@ def get_content_from_url_using_cookies(url: str, cookies: str) -> object:
         Content of the response of the request or None.
     """
     headers = {
-        'Host': 'menus.nypl.org',
+        'Host': HOST,
         'Connection': 'keep-alive',
         'Cache-Control': 'max-age=0',
         'Upgrade-Insecure-Requests': '1',
@@ -226,7 +229,7 @@ def parse_arguments() -> object:
     try:
         ap = argparse.ArgumentParser(prog='download',
                                      usage='%(prog)s [options] path',
-                                     description='Scrape menus from menus.nypl.org.')
+                                     description='Scrape menus from ' + HOST)
         ap.add_argument('--start_date',
                         action='store',
                         type=str,
@@ -305,10 +308,10 @@ if __name__ == '__main__':
     print('to: ' + str(end_date.strftime('%Y.%m.%d.')) + ' ')
     print('path: ' + output_path)
 
-    pages_to_get_urls_from = ['http://menus.nypl.org/menus/decade/' + str(start_date.year)]
+    pages_to_get_urls_from = [URL + str(start_date.year)]
     decade_year = start_date.year + 10
     while decade_year <= end_date.year:
-        pages_to_get_urls_from.append('http://menus.nypl.org/menus/decade/' + str(decade_year))
+        pages_to_get_urls_from.append(URL + str(decade_year))
         decade_year = decade_year + 10
 
     menu_urls = []
