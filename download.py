@@ -16,8 +16,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.common.by import By
 
-HOST = 'menus.nypl.org'
-URL = 'http://menus.nypl.org/menus/decade/'
+HOST = ''
+URL = ''
 
 
 def get_content_from_url_using_cookies(url: str, cookies: str) -> object:
